@@ -93,8 +93,8 @@ nav {
 }
 
 .logo img {
-  width: 32px;
   height: 32px;
+  width: auto;
   border-radius: 8px;
 }
 
@@ -1083,4 +1083,5 @@ footer {
 .phone-mockup {
   animation: float 4s ease-in-out infinite;
 }
+
 
