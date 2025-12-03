@@ -328,14 +328,14 @@ function getDashboardSummary() {
 }
 
 // Copy dashboard summary only
-async function copyDashboardSummary() {
+async function copyDashboardSummary(event) {
   try {
     const summary = getDashboardSummary();
     const jsonString = JSON.stringify(summary, null, 2);
     await navigator.clipboard.writeText(jsonString);
 
     // Visual feedback
-    showCopyFeedback(event.target.closest('.copy-data-btn'));
+    showCopyFeedback(event.currentTarget);
   } catch (error) {
     console.error('Error copying dashboard summary:', error);
     alert('Failed to copy summary. Check console for details.');
@@ -343,7 +343,7 @@ async function copyDashboardSummary() {
 }
 
 // Copy all dashboard data including summary
-async function copyAllDashboardData() {
+async function copyAllDashboardData(event) {
   try {
     // Fetch all relevant data
     const [
@@ -372,7 +372,7 @@ async function copyAllDashboardData() {
     await navigator.clipboard.writeText(jsonString);
 
     // Visual feedback
-    showCopyFeedback(event.target.closest('.copy-data-btn'));
+    showCopyFeedback(event.currentTarget);
   } catch (error) {
     console.error('Error copying all dashboard data:', error);
     alert('Failed to copy data. Check console for details.');
