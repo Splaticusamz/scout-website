@@ -162,31 +162,220 @@
         </div>
       </section>
 
-      <!-- Source Health -->
+      <!-- Edge Functions -->
+      <section class="dashboard-section">
+        <div class="section-header-with-actions">
+          <h2 class="section-title">
+            <i data-lucide="zap"></i>
+            Edge Functions
+          </h2>
+        </div>
+        <div class="edge-functions-layout">
+          <div class="edge-functions-grid">
+          <div class="edge-function-card">
+            <div class="edge-function-header">
+              <div class="edge-function-info">
+                <div class="edge-function-name">scraper-job</div>
+                <div class="edge-function-description">Scrapes RSS feeds and adds raw content</div>
+              </div>
+              <div class="edge-function-status" id="status-scraper-job">
+                <span class="status-badge healthy">Ready</span>
+              </div>
+            </div>
+            <div class="edge-function-meta">
+              <div class="edge-function-last-run">
+                Last run: <span id="lastrun-scraper-job">—</span>
+              </div>
+            </div>
+            <button class="edge-function-trigger" onclick="triggerEdgeFunction('scraper-job')">
+              <i data-lucide="play"></i>
+              <span>Trigger Scraper</span>
+            </button>
+          </div>
+
+          <div class="edge-function-card">
+            <div class="edge-function-header">
+              <div class="edge-function-info">
+                <div class="edge-function-name">ai-processor</div>
+                <div class="edge-function-description">Processes raw content with AI</div>
+              </div>
+              <div class="edge-function-status" id="status-ai-processor">
+                <span class="status-badge healthy">Ready</span>
+              </div>
+            </div>
+            <div class="edge-function-meta">
+              <div class="edge-function-last-run">
+                Last run: <span id="lastrun-ai-processor">—</span>
+              </div>
+            </div>
+            <button class="edge-function-trigger" onclick="triggerEdgeFunction('ai-processor')">
+              <i data-lucide="play"></i>
+              <span>Trigger Processor</span>
+            </button>
+          </div>
+
+          <div class="edge-function-card">
+            <div class="edge-function-header">
+              <div class="edge-function-info">
+                <div class="edge-function-name">ai-prompt-evolver</div>
+                <div class="edge-function-description">Evolves AI prompts based on feedback</div>
+              </div>
+              <div class="edge-function-status" id="status-ai-prompt-evolver">
+                <span class="status-badge healthy">Ready</span>
+              </div>
+            </div>
+            <div class="edge-function-meta">
+              <div class="edge-function-last-run">
+                Last run: <span id="lastrun-ai-prompt-evolver">—</span>
+              </div>
+            </div>
+            <button class="edge-function-trigger" onclick="triggerEdgeFunction('ai-prompt-evolver')">
+              <i data-lucide="play"></i>
+              <span>Trigger Evolver</span>
+            </button>
+          </div>
+
+          <div class="edge-function-card">
+            <div class="edge-function-header">
+              <div class="edge-function-info">
+                <div class="edge-function-name">discovery-feed</div>
+                <div class="edge-function-description">Serves discovery feed to users</div>
+              </div>
+              <div class="edge-function-status" id="status-discovery-feed">
+                <span class="status-badge healthy">Ready</span>
+              </div>
+            </div>
+            <div class="edge-function-meta">
+              <div class="edge-function-last-run">
+                Last run: <span id="lastrun-discovery-feed">—</span>
+              </div>
+            </div>
+            <button class="edge-function-trigger" onclick="triggerEdgeFunction('discovery-feed')">
+              <i data-lucide="play"></i>
+              <span>Trigger Feed</span>
+            </button>
+          </div>
+
+          <div class="edge-function-card">
+            <div class="edge-function-header">
+              <div class="edge-function-info">
+                <div class="edge-function-name">feedback-processor</div>
+                <div class="edge-function-description">Processes user feedback on cards</div>
+              </div>
+              <div class="edge-function-status" id="status-feedback-processor">
+                <span class="status-badge healthy">Ready</span>
+              </div>
+            </div>
+            <div class="edge-function-meta">
+              <div class="edge-function-last-run">
+                Last run: <span id="lastrun-feedback-processor">—</span>
+              </div>
+            </div>
+            <button class="edge-function-trigger" onclick="triggerEdgeFunction('feedback-processor')">
+              <i data-lucide="play"></i>
+              <span>Trigger Feedback</span>
+            </button>
+          </div>
+
+          <div class="edge-function-card">
+            <div class="edge-function-header">
+              <div class="edge-function-info">
+                <div class="edge-function-name">summary-updater</div>
+                <div class="edge-function-description">Updates card summaries</div>
+              </div>
+              <div class="edge-function-status" id="status-summary-updater">
+                <span class="status-badge healthy">Ready</span>
+              </div>
+            </div>
+            <div class="edge-function-meta">
+              <div class="edge-function-last-run">
+                Last run: <span id="lastrun-summary-updater">—</span>
+              </div>
+            </div>
+            <button class="edge-function-trigger" onclick="triggerEdgeFunction('summary-updater')">
+              <i data-lucide="play"></i>
+              <span>Trigger Updater</span>
+            </button>
+          </div>
+        </div>
+        
+        <div class="activity-console">
+          <div class="console-header">
+            <div class="console-title">
+              <i data-lucide="terminal"></i>
+              <span>Activity Console</span>
+            </div>
+            <button class="console-clear-btn" onclick="clearConsole()">
+              <i data-lucide="trash-2"></i>
+              Clear
+            </button>
+          </div>
+          <div class="console-logs" id="activity-console-logs">
+            <div class="console-log info">
+              <span class="console-time">--:--:--</span>
+              <span class="console-message">Console ready. Trigger a function to see activity...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      </section>
+
+      <!-- System Timeline -->
       <section class="dashboard-section">
         <h2 class="section-title">
-          <i data-lucide="rss"></i>
-          Source Health
+          <i data-lucide="clock"></i>
+          System Timeline
         </h2>
-        <div class="table-container">
-          <table class="dashboard-table">
-            <thead>
-              <tr>
-                <th>Source</th>
-                <th>Status</th>
-                <th>Last Scraped</th>
-                <th>Next Scrape</th>
-                <th>Cards</th>
-                <th>Quality</th>
-                <th>Errors</th>
-              </tr>
-            </thead>
-            <tbody id="sources-table-body">
-              <tr>
-                <td colspan="7" class="loading-cell">Loading sources...</td>
-              </tr>
-            </tbody>
-          </table>
+        <div class="timeline-container">
+          <div class="timeline-item">
+            <div class="timeline-icon scraping">
+              <i data-lucide="rss"></i>
+            </div>
+            <div class="timeline-content">
+              <div class="timeline-label">RSS Scraping</div>
+              <div class="timeline-value" id="timeline-scraping">—</div>
+              <div class="timeline-sublabel">Last source scraped</div>
+            </div>
+          </div>
+          <div class="timeline-arrow">
+            <i data-lucide="arrow-right"></i>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-icon raw-content">
+              <i data-lucide="file-text"></i>
+            </div>
+            <div class="timeline-content">
+              <div class="timeline-label">Raw Content Added</div>
+              <div class="timeline-value" id="timeline-raw-content">—</div>
+              <div class="timeline-sublabel">Last item scraped</div>
+            </div>
+          </div>
+          <div class="timeline-arrow">
+            <i data-lucide="arrow-right"></i>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-icon processing">
+              <i data-lucide="cpu"></i>
+            </div>
+            <div class="timeline-content">
+              <div class="timeline-label">AI Processing</div>
+              <div class="timeline-value" id="timeline-processing">—</div>
+              <div class="timeline-sublabel">Last item processed</div>
+            </div>
+          </div>
+          <div class="timeline-arrow">
+            <i data-lucide="arrow-right"></i>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-icon card-created">
+              <i data-lucide="check-circle"></i>
+            </div>
+            <div class="timeline-content">
+              <div class="timeline-label">Card Published</div>
+              <div class="timeline-value" id="timeline-card-created">—</div>
+              <div class="timeline-sublabel">Last card created</div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -211,6 +400,37 @@
             <div class="activity-label">Most Recent</div>
             <div class="activity-value small" id="activity-recent">—</div>
             <div class="activity-sublabel">card created</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Source Health -->
+      <section class="dashboard-section">
+        <h2 class="section-title collapsible-header" onclick="toggleSourceHealth()">
+          <i data-lucide="rss"></i>
+          Source Health
+          <i data-lucide="chevron-down" class="collapse-icon" id="source-health-icon"></i>
+        </h2>
+        <div class="collapsible-content" id="source-health-content">
+          <div class="table-container">
+            <table class="dashboard-table">
+              <thead>
+                <tr>
+                  <th>Source</th>
+                  <th>Status</th>
+                  <th>Last Scraped</th>
+                  <th>Next Scrape</th>
+                  <th>Cards</th>
+                  <th>Quality</th>
+                  <th>Errors</th>
+                </tr>
+              </thead>
+              <tbody id="sources-table-body">
+                <tr>
+                  <td colspan="7" class="loading-cell">Loading sources...</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </section>

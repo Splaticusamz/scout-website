@@ -28,6 +28,8 @@ async function loadAllData() {
       loadOverviewStats(),
       loadProcessingPipeline(),
       loadSourceHealth(),
+      loadEdgeFunctions(),
+      loadSystemTimeline(),
       loadRecentActivity()
     ]);
   } catch (error) {
@@ -214,6 +216,284 @@ async function loadSourceHealth() {
   }
 }
 
+// Load edge functions status
+async function loadEdgeFunctions() {
+  try {
+    const edgeFunctions = [
+      { name: 'scraper-job', lastRunField: 'last_scraped_at', table: 'discovery_sources' },
+      { name: 'ai-processor', lastRunField: 'updated_at', table: 'raw_scraped_content', filter: { processed: true } },
+      { name: 'ai-prompt-evolver', lastRunField: 'updated_at', table: 'discovery_cards' },
+      { name: 'discovery-feed', lastRunField: 'created_at', table: 'discovery_cards' },
+      { name: 'feedback-processor', lastRunField: 'updated_at', table: 'discovery_cards' },
+      { name: 'summary-updater', lastRunField: 'updated_at', table: 'discovery_cards' }
+    ];
+
+    for (const func of edgeFunctions) {
+      try {
+        let query = supabaseClient
+          .from(func.table)
+          .select(func.lastRunField)
+          .order(func.lastRunField, { ascending: false, nullsFirst: false })
+          .limit(1);
+
+        if (func.filter) {
+          Object.entries(func.filter).forEach(([key, value]) => {
+            query = query.eq(key, value);
+          });
+        }
+
+        const { data } = await query;
+        const lastRun = data?.[0]?.[func.lastRunField] ? new Date(data[0][func.lastRunField]) : null;
+        
+        const element = document.getElementById(`lastrun-${func.name}`);
+        if (element) {
+          element.textContent = lastRun ? formatRelativeTime(lastRun) : 'Never';
+        }
+      } catch (error) {
+        console.error(`Error loading ${func.name}:`, error);
+      }
+    }
+  } catch (error) {
+    console.error('Error loading edge functions:', error);
+  }
+}
+
+// Activity console
+function addConsoleLog(message, type = 'info') {
+  const console = document.getElementById('activity-console-logs');
+  if (!console) return;
+  
+  const timestamp = new Date().toLocaleTimeString();
+  const logEntry = document.createElement('div');
+  logEntry.className = `console-log ${type}`;
+  
+  const timeSpan = document.createElement('span');
+  timeSpan.className = 'console-time';
+  timeSpan.textContent = timestamp;
+  
+  const messageSpan = document.createElement('span');
+  messageSpan.className = 'console-message';
+  messageSpan.textContent = message;
+  
+  logEntry.appendChild(timeSpan);
+  logEntry.appendChild(messageSpan);
+  console.appendChild(logEntry);
+  
+  // Auto-scroll to bottom
+  console.scrollTop = console.scrollHeight;
+  
+  // Keep only last 50 logs
+  while (console.children.length > 50) {
+    console.removeChild(console.firstChild);
+  }
+}
+
+function clearConsole() {
+  const console = document.getElementById('activity-console-logs');
+  if (console) {
+    console.innerHTML = '';
+  }
+}
+
+// Monitor database changes during function execution
+async function monitorDatabaseChanges(functionName, startTime) {
+  const tables = {
+    'scraper-job': { table: 'raw_scraped_content', field: 'scraped_at' },
+    'ai-processor': { table: 'discovery_cards', field: 'created_at' }
+  };
+
+  const config = tables[functionName];
+  if (!config) return;
+
+  try {
+    const { data } = await supabaseClient
+      .from(config.table)
+      .select('*')
+      .gte(config.field, startTime.toISOString())
+      .order(config.field, { ascending: false })
+      .limit(10);
+
+    if (data && data.length > 0) {
+      data.forEach(item => {
+        if (functionName === 'scraper-job') {
+          addConsoleLog(`  • Scraped: ${item.title || 'Item'}`, 'info');
+        } else if (functionName === 'ai-processor') {
+          addConsoleLog(`  • Created card: ${item.title || 'Card'}`, 'success');
+        }
+      });
+    }
+  } catch (error) {
+    // Silently fail monitoring
+  }
+}
+
+// Trigger edge function
+async function triggerEdgeFunction(functionName) {
+  const btn = event.target.closest('.edge-function-trigger');
+  const originalContent = btn.innerHTML;
+  
+  try {
+    // Update button state
+    btn.disabled = true;
+    btn.innerHTML = '<i data-lucide="loader"></i><span>Running...</span>';
+    btn.classList.add('running');
+    lucide.createIcons();
+
+    // Add console logs
+    addConsoleLog(`→ Triggering ${functionName}...`, 'info');
+
+    // Record start time for monitoring
+    const executionStartTime = new Date();
+
+    // Call the edge function
+    const startTime = Date.now();
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/${functionName}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const duration = Date.now() - startTime;
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`HTTP ${response.status}: ${errorText || response.statusText}`);
+    }
+
+    // Try to parse response
+    let result;
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      result = await response.json();
+    } else {
+      const text = await response.text();
+      result = { message: text };
+    }
+    
+    // Log success with details
+    addConsoleLog(`✓ ${functionName} completed in ${duration}ms`, 'success');
+    
+    // Log detailed results from response
+    if (result.message) {
+      addConsoleLog(`  ${result.message}`, 'info');
+    }
+    if (result.scraped !== undefined) {
+      addConsoleLog(`  Scraped ${result.scraped} items`, 'info');
+    }
+    if (result.processed !== undefined) {
+      addConsoleLog(`  Processed ${result.processed} items`, 'info');
+    }
+    if (result.created !== undefined) {
+      addConsoleLog(`  Created ${result.created} cards`, 'success');
+    }
+    if (result.rejected !== undefined) {
+      addConsoleLog(`  Rejected ${result.rejected} items`, 'warning');
+    }
+    if (result.errors !== undefined) {
+      addConsoleLog(`  Errors: ${result.errors}`, 'error');
+    }
+    if (result.details && Array.isArray(result.details)) {
+      result.details.forEach(detail => {
+        addConsoleLog(`  • ${detail}`, 'info');
+      });
+    }
+    if (result.logs && Array.isArray(result.logs)) {
+      result.logs.forEach(log => {
+        const logType = log.level === 'error' ? 'error' : log.level === 'warn' ? 'warning' : 'info';
+        addConsoleLog(`  ${log.message}`, logType);
+      });
+    }
+
+    // Monitor database changes to show what was created
+    await monitorDatabaseChanges(functionName, executionStartTime);
+
+    // Success feedback
+    btn.innerHTML = '<i data-lucide="check"></i><span>Success!</span>';
+    btn.classList.remove('running');
+    btn.classList.add('success');
+    lucide.createIcons();
+
+    // Refresh data after a short delay
+    setTimeout(async () => {
+      addConsoleLog('→ Refreshing dashboard data...', 'info');
+      await loadAllData();
+      addConsoleLog('✓ Dashboard refreshed', 'success');
+      btn.innerHTML = originalContent;
+      btn.classList.remove('success');
+      btn.disabled = false;
+      lucide.createIcons();
+    }, 2000);
+
+  } catch (error) {
+    console.error(`Error triggering ${functionName}:`, error);
+    
+    // Log error with details
+    addConsoleLog(`✗ ${functionName} failed`, 'error');
+    addConsoleLog(`  ${error.message}`, 'error');
+    
+    // Error feedback
+    btn.innerHTML = '<i data-lucide="x"></i><span>Failed</span>';
+    btn.classList.remove('running');
+    btn.classList.add('error');
+    lucide.createIcons();
+
+    setTimeout(() => {
+      btn.innerHTML = originalContent;
+      btn.classList.remove('error');
+      btn.disabled = false;
+      lucide.createIcons();
+    }, 3000);
+  }
+}
+
+// Load system timeline
+async function loadSystemTimeline() {
+  try {
+    // Get most recent scraping timestamp from sources
+    const { data: sources } = await supabaseClient
+      .from('discovery_sources')
+      .select('last_scraped_at')
+      .order('last_scraped_at', { ascending: false, nullsFirst: false })
+      .limit(1);
+    
+    // Get most recent raw content
+    const { data: rawContent } = await supabaseClient
+      .from('raw_scraped_content')
+      .select('scraped_at')
+      .order('scraped_at', { ascending: false })
+      .limit(1);
+    
+    // Get most recent processed item
+    const { data: processedContent } = await supabaseClient
+      .from('raw_scraped_content')
+      .select('processed_at')
+      .eq('processed', true)
+      .order('processed_at', { ascending: false, nullsFirst: false })
+      .limit(1);
+    
+    // Get most recent card created
+    const { data: cards } = await supabaseClient
+      .from('discovery_cards')
+      .select('created_at')
+      .order('created_at', { ascending: false })
+      .limit(1);
+    
+    const lastScraped = sources?.[0]?.last_scraped_at ? new Date(sources[0].last_scraped_at) : null;
+    const lastRawContent = rawContent?.[0]?.scraped_at ? new Date(rawContent[0].scraped_at) : null;
+    const lastProcessed = processedContent?.[0]?.processed_at ? new Date(processedContent[0].processed_at) : null;
+    const lastCardCreated = cards?.[0]?.created_at ? new Date(cards[0].created_at) : null;
+    
+    document.getElementById('timeline-scraping').textContent = lastScraped ? formatRelativeTime(lastScraped) : 'Never';
+    document.getElementById('timeline-raw-content').textContent = lastRawContent ? formatRelativeTime(lastRawContent) : 'Never';
+    document.getElementById('timeline-processing').textContent = lastProcessed ? formatRelativeTime(lastProcessed) : 'Never';
+    document.getElementById('timeline-card-created').textContent = lastCardCreated ? formatRelativeTime(lastCardCreated) : 'Never';
+  } catch (error) {
+    console.error('Error loading system timeline:', error);
+  }
+}
+
 // Load recent activity
 async function loadRecentActivity() {
   try {
@@ -393,6 +673,23 @@ function showCopyFeedback(btn) {
     btn.classList.remove('copied');
     lucide.createIcons();
   }, 2000);
+}
+
+// Toggle source health section
+function toggleSourceHealth() {
+  const content = document.getElementById('source-health-content');
+  const icon = document.getElementById('source-health-icon');
+  
+  if (content.classList.contains('collapsed')) {
+    content.classList.remove('collapsed');
+    icon.style.transform = 'rotate(0deg)';
+  } else {
+    content.classList.add('collapsed');
+    icon.style.transform = 'rotate(-90deg)';
+  }
+  
+  // Reinitialize icons after DOM change
+  setTimeout(() => lucide.createIcons(), 0);
 }
 
 // Initialize on page load
