@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Discovery Feed Dashboard — Scout</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/styles.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="dashboard-body">
+  <div class="dashboard-container">
+    <header class="dashboard-header">
+      <div class="dashboard-header-content">
+        <div>
+          <h1 class="dashboard-title">Discovery Feed Dashboard</h1>
+          <p class="dashboard-subtitle">Real-time monitoring of the Scout AI curation system</p>
+        </div>
+        <div class="dashboard-header-actions">
+          <div class="copy-buttons-group">
+            <button class="copy-data-btn" onclick="copyDashboardSummary()" title="Copy dashboard summary">
+              <i data-lucide="clipboard"></i>
+              <span>Copy Summary</span>
+            </button>
+            <button class="copy-data-btn" onclick="copyAllDashboardData()" title="Copy all dashboard data for AI debugging">
+              <i data-lucide="clipboard-copy"></i>
+              <span>Copy All Data</span>
+            </button>
+          </div>
+          <div class="refresh-indicator">
+            <i data-lucide="refresh-cw" class="refresh-icon"></i>
+            <span class="refresh-text">Auto-refresh in <span id="refresh-countdown">30</span>s</span>
+          </div>
+          <div class="last-updated">
+            Last updated: <span id="last-updated-time">Loading...</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="dashboard-main">
+      <!-- Overview Stats -->
+      <section class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon blue">
+            <i data-lucide="layers"></i>
+          </div>
+          <div class="stat-content">
+            <div class="stat-label">Total Cards</div>
+            <div class="stat-value" id="stat-total-cards">—</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon green">
+            <i data-lucide="radio"></i>
+          </div>
+          <div class="stat-content">
+            <div class="stat-label">Active Sources</div>
+            <div class="stat-value" id="stat-active-sources">—</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon yellow">
+            <i data-lucide="clock"></i>
+          </div>
+          <div class="stat-content">
+            <div class="stat-label">Pending Processing</div>
+            <div class="stat-value" id="stat-pending-processing">—</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon red">
+            <i data-lucide="image-off"></i>
+          </div>
+          <div class="stat-content">
+            <div class="stat-label">Missing Images</div>
+            <div class="stat-value" id="stat-missing-images">—</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon green">
+            <i data-lucide="thumbs-up"></i>
+          </div>
+          <div class="stat-content">
+            <div class="stat-label">Total Likes</div>
+            <div class="stat-value" id="stat-total-likes">—</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon red">
+            <i data-lucide="thumbs-down"></i>
+          </div>
+          <div class="stat-content">
+            <div class="stat-label">Total Dislikes</div>
+            <div class="stat-value" id="stat-total-dislikes">—</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon purple">
+            <i data-lucide="star"></i>
+          </div>
+          <div class="stat-content">
+            <div class="stat-label">Avg Quality Score</div>
+            <div class="stat-value" id="stat-avg-quality">—</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon blue">
+            <i data-lucide="link"></i>
+          </div>
+          <div class="stat-content">
+            <div class="stat-label">Cards with Links</div>
+            <div class="stat-value" id="stat-cards-with-links">—</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Processing Pipeline -->
+      <section class="dashboard-section">
+        <h2 class="section-title">
+          <i data-lucide="git-branch"></i>
+          Processing Pipeline
+        </h2>
+        <div class="pipeline-card">
+          <div class="pipeline-stats" id="pipeline-stats">
+            <div class="pipeline-stat">
+              <div class="pipeline-label">Unprocessed</div>
+              <div class="pipeline-value" id="pipeline-unprocessed">—</div>
+            </div>
+            <div class="pipeline-stat">
+              <div class="pipeline-label">Created Cards</div>
+              <div class="pipeline-value success" id="pipeline-created">—</div>
+            </div>
+            <div class="pipeline-stat">
+              <div class="pipeline-label">Rejected</div>
+              <div class="pipeline-value warning" id="pipeline-rejected">—</div>
+            </div>
+            <div class="pipeline-stat">
+              <div class="pipeline-label">Errors</div>
+              <div class="pipeline-value error" id="pipeline-errors">—</div>
+            </div>
+          </div>
+          <div class="pipeline-progress">
+            <div class="progress-bar">
+              <div class="progress-fill" id="pipeline-progress-fill" style="width: 0%"></div>
+            </div>
+            <div class="progress-label">
+              <span id="pipeline-progress-text">0% processed</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Source Health -->
+      <section class="dashboard-section">
+        <h2 class="section-title">
+          <i data-lucide="rss"></i>
+          Source Health
+        </h2>
+        <div class="table-container">
+          <table class="dashboard-table">
+            <thead>
+              <tr>
+                <th>Source</th>
+                <th>Status</th>
+                <th>Last Scraped</th>
+                <th>Next Scrape</th>
+                <th>Cards</th>
+                <th>Quality</th>
+                <th>Errors</th>
+              </tr>
+            </thead>
+            <tbody id="sources-table-body">
+              <tr>
+                <td colspan="7" class="loading-cell">Loading sources...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Recent Activity -->
+      <section class="dashboard-section">
+        <h2 class="section-title">
+          <i data-lucide="activity"></i>
+          Recent Activity
+        </h2>
+        <div class="activity-grid">
+          <div class="activity-card">
+            <div class="activity-label">Last 24 Hours</div>
+            <div class="activity-value" id="activity-24h">—</div>
+            <div class="activity-sublabel">new cards</div>
+          </div>
+          <div class="activity-card">
+            <div class="activity-label">Last 7 Days</div>
+            <div class="activity-value" id="activity-7d">—</div>
+            <div class="activity-sublabel">new cards</div>
+          </div>
+          <div class="activity-card">
+            <div class="activity-label">Most Recent</div>
+            <div class="activity-value small" id="activity-recent">—</div>
+            <div class="activity-sublabel">card created</div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="../js/dashboard.js"></script>
+  <script>
+    lucide.createIcons();
+  </script>
+</body>
+</html>
+
